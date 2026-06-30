@@ -6,18 +6,24 @@ pub mod ray;
 pub mod color;
 pub mod geometry;
 
-fn hit_sphere(center : ray::Point3D, radius : f64, beam : &ray::Ray) -> bool {
+fn hit_sphere(center : ray::Point3D, radius : f64, beam : &ray::Ray) -> Option<f64> {
     let center_to_camera = center - beam.origin();
-    let a = beam.direction().dot(&beam.direction());
-    let b = -2.0 * beam.direction().dot(&center_to_camera);
-    let c = center_to_camera.dot(&center_to_camera) - radius*radius;
-    let discriminant = b*b - 4.0 * a * c;
-    discriminant >= 0.0
+    let a = beam.direction().sqr_len();
+    let h = beam.direction().dot(&center_to_camera);
+    let c = center_to_camera.sqr_len() - radius*radius;
+    let discriminant = h * h - a * c;
+    if discriminant >= 0.0 {
+        return Option::Some(
+            (h - f64::sqrt(discriminant)) / a
+        );
+    }
+    Option::None
 }
 
 fn ray_color(beam : ray::Ray) -> color::Color {
-    if hit_sphere(ray::Point3D::new([0.0, 0.0, -1.0]), 0.5, &beam) {
-        return color::Color::new([1.0, 0.0, 0.0]);
+    if let Some(hit) = hit_sphere(ray::Point3D::new([0.0, 0.0, -1.0]), 0.5, &beam) {
+        let normal = (beam.at(hit) - Vector3D::new([0.0,0.0,-1.0])).norm();
+        return color::Color::new([normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0]) * 0.5;
     }
     let unit = beam.direction().norm();
     let grad = 0.5 * (unit.y() + 1.0);
