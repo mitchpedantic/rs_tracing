@@ -6,8 +6,20 @@ pub mod ray;
 pub mod color;
 pub mod geometry;
 
-fn ray_color(r : ray::Ray) -> color::Color {
-    let unit = r.direction().norm();
+fn hit_sphere(center : ray::Point3D, radius : f64, beam : &ray::Ray) -> bool {
+    let center_to_camera = center - beam.origin();
+    let a = beam.direction().dot(&beam.direction());
+    let b = -2.0 * beam.direction().dot(&center_to_camera);
+    let c = center_to_camera.dot(&center_to_camera) - radius*radius;
+    let discriminant = b*b - 4.0 * a * c;
+    discriminant >= 0.0
+}
+
+fn ray_color(beam : ray::Ray) -> color::Color {
+    if hit_sphere(ray::Point3D::new([0.0, 0.0, -1.0]), 0.5, &beam) {
+        return color::Color::new([1.0, 0.0, 0.0]);
+    }
+    let unit = beam.direction().norm();
     let grad = 0.5 * (unit.y() + 1.0);
     // mix white (1.0, 1.0, 1.0) and blue (0.5, 0.7, 1.0)
     color::Color::new([1.0, 1.0, 1.0]) * (1.0 - grad) + color::Color::new([0.5, 0.7, 1.0]) * grad
@@ -18,7 +30,7 @@ fn main() {
     let aspect_ratio = 16.0 / 9.0;
     let w_image = 400;
     let h_image = {
-        let h_image = w_image / aspect_ratio as i32;
+        let h_image = (w_image as f64 / aspect_ratio) as i32;
         if h_image  < 1 { 1 } else { h_image }
     };
 
