@@ -1,10 +1,12 @@
 use log::{debug, info};
 
-use crate::geometry::vectors::Vector3D;
-
 pub mod ray;
 pub mod color;
+pub mod sphere;
+pub mod physics;
 pub mod geometry;
+
+use crate::geometry::vectors::Vector3D;
 
 fn hit_sphere(center : ray::Point3D, radius : f64, beam : &ray::Ray) -> Option<f64> {
     let center_to_camera = center - beam.origin();
